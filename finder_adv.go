@@ -38,47 +38,47 @@ type FinderAdvConfig struct {
 	MinResultScore     float64  // drop Tavily results below this score
 	MaxExtractChars    int      // truncate extracted content to this many characters
 	ParallelExtractors int      // parallelism when chunking extraction
-	
+
 	// Enhanced OSM integration
 	PreferOSMBoundaries bool     // prioritize OSM boundary data over LLM
 	OSMAdminLevels      []string // specific admin levels to query (default: 8,9,10,11)
 	OSMPlaceTypes       []string // specific place types to query
 	MinBoundaryArea     float64  // minimum acceptable boundary area in km²
-	
+
 	// Multi-phase search strategy
-	EnableMultiPhase    bool     // enable multi-phase search (official first, then general)
-	OfficialDomains     []string // domains considered official/authoritative
-	
+	EnableMultiPhase bool     // enable multi-phase search (official first, then general)
+	OfficialDomains  []string // domains considered official/authoritative
+
 	// Confidence and validation
-	MinConfidenceScore  float64  // minimum confidence for neighborhood inclusion
-	EnableValidation    bool     // enable geometric and semantic validation
-	
+	MinConfidenceScore float64 // minimum confidence for neighborhood inclusion
+	EnableValidation   bool    // enable geometric and semantic validation
+
 	// Performance options
-	EnableCaching       bool     // enable caching for expensive operations
-	MaxConcurrency      int      // maximum concurrent operations
-	Timeout             time.Duration // operation timeout
+	EnableCaching  bool          // enable caching for expensive operations
+	MaxConcurrency int           // maximum concurrent operations
+	Timeout        time.Duration // operation timeout
 }
 
 // ----------- Enhanced Data Structures -----------
 
 type NeighborhoodAdvanced struct {
-	Name            string          `json:"name"`
-	Lat             float64         `json:"lat"`
-	Lng             float64         `json:"lng"`
-	Boundary        json.RawMessage `json:"boundary,omitempty"`
-	
+	Name     string          `json:"name"`
+	Lat      float64         `json:"lat"`
+	Lng      float64         `json:"lng"`
+	Boundary json.RawMessage `json:"boundary,omitempty"`
+
 	// Enhanced metadata
-	Source          string          `json:"source"`          // osm, llm, tavily, hybrid
-	ConfidenceScore float64         `json:"confidence"`      // 0.0 to 1.0
-	Aliases         []string        `json:"aliases,omitempty"`
-	AdminLevel      string          `json:"admin_level,omitempty"`
-	PlaceType       string          `json:"place_type,omitempty"`
-	AreaKm2         float64         `json:"area_km2,omitempty"`
-	OSMId           string          `json:"osm_id,omitempty"`
-	
+	Source          string   `json:"source"`     // osm, llm, tavily, hybrid
+	ConfidenceScore float64  `json:"confidence"` // 0.0 to 1.0
+	Aliases         []string `json:"aliases,omitempty"`
+	AdminLevel      string   `json:"admin_level,omitempty"`
+	PlaceType       string   `json:"place_type,omitempty"`
+	AreaKm2         float64  `json:"area_km2,omitempty"`
+	OSMId           string   `json:"osm_id,omitempty"`
+
 	// Validation flags
-	HasValidBoundary bool            `json:"has_valid_boundary"`
-	GeometryValid   bool            `json:"geometry_valid"`
+	HasValidBoundary bool `json:"has_valid_boundary"`
+	GeometryValid    bool `json:"geometry_valid"`
 }
 
 type FinderAdvancedOut struct {
@@ -87,14 +87,14 @@ type FinderAdvancedOut struct {
 }
 
 type SearchMetadata struct {
-	City              string    `json:"city"`
-	SearchTimestamp   time.Time `json:"search_timestamp"`
-	TotalFound        int       `json:"total_found"`
-	OSMCount          int       `json:"osm_count"`
-	LLMCount          int       `json:"llm_count"`
-	HybridCount       int       `json:"hybrid_count"`
-	ProcessingTimeMs  int64     `json:"processing_time_ms"`
-	QualityScore      float64   `json:"quality_score"`
+	City             string    `json:"city"`
+	SearchTimestamp  time.Time `json:"search_timestamp"`
+	TotalFound       int       `json:"total_found"`
+	OSMCount         int       `json:"osm_count"`
+	LLMCount         int       `json:"llm_count"`
+	HybridCount      int       `json:"hybrid_count"`
+	ProcessingTimeMs int64     `json:"processing_time_ms"`
+	QualityScore     float64   `json:"quality_score"`
 }
 
 // ----------- Enhanced OSM Integration -----------
@@ -110,8 +110,8 @@ type OSMNeighborhoodAdvanced struct {
 	BoundingBox struct {
 		MinLat, MinLng, MaxLat, MaxLng float64
 	} `json:"bbox"`
-	AreaKm2     float64           `json:"area_km2"`
-	Boundary    json.RawMessage   `json:"boundary,omitempty"`
+	AreaKm2  float64         `json:"area_km2"`
+	Boundary json.RawMessage `json:"boundary,omitempty"`
 }
 
 // ----------- Multi-Phase Search Strategy -----------
@@ -129,7 +129,7 @@ type SearchPhase struct {
 
 func RunAdvancedFinder(cfg *FinderAdvConfig) (*FinderAdvancedOut, error) {
 	startTime := time.Now()
-	
+
 	if cfg == nil {
 		return nil, errors.New("advanced finder config is nil")
 	}
@@ -144,6 +144,8 @@ func RunAdvancedFinder(cfg *FinderAdvConfig) (*FinderAdvancedOut, error) {
 	tavilyKey := os.Getenv("TAVILY_API_KEY")
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	geminiKey := os.Getenv("GOOGLE_API_KEY")
+
+	log.Println("Gemini key is pressent - ", geminiKey != "")
 
 	log.Printf("🚀 Starting Advanced Finder for city: %s", cfg.City)
 
@@ -189,7 +191,7 @@ func RunAdvancedFinder(cfg *FinderAdvConfig) (*FinderAdvancedOut, error) {
 	result.Neighborhoods = validatedNeighborhoods
 	result.Metadata.TotalFound = len(validatedNeighborhoods)
 	result.Metadata.ProcessingTimeMs = time.Since(startTime).Milliseconds()
-	
+
 	// Calculate quality metrics
 	calculateQualityMetrics(&result)
 
@@ -200,7 +202,7 @@ func RunAdvancedFinder(cfg *FinderAdvConfig) (*FinderAdvancedOut, error) {
 		}
 	}
 
-	log.Printf("🎉 Advanced Finder completed: %d neighborhoods found (%.2fs)", 
+	log.Printf("🎉 Advanced Finder completed: %d neighborhoods found (%.2fs)",
 		result.Metadata.TotalFound, float64(result.Metadata.ProcessingTimeMs)/1000.0)
 
 	return &result, nil
@@ -251,7 +253,7 @@ func setAdvancedDefaults(cfg *FinderAdvConfig) {
 
 	if strings.TrimSpace(cfg.Query) == "" {
 		cfg.Query = fmt.Sprintf(
-			"official administrative neighborhoods wards districts %s boundaries polygon GeoJSON shapefile municipal data", 
+			"official administrative neighborhoods wards districts %s boundaries polygon GeoJSON shapefile municipal data",
 			cfg.City)
 	}
 }
@@ -260,30 +262,42 @@ func setAdvancedDefaults(cfg *FinderAdvConfig) {
 
 func fetchEnhancedOSMData(cfg *FinderAdvConfig) ([]OSMNeighborhoodAdvanced, error) {
 	cityEsc := url.QueryEscape(cfg.City)
+	cacheKey := strings.ToLower(strings.ReplaceAll(cityEsc, "%20", "_"))
+	cacheDir := filepath.Join("cache", "osm")
+	cacheFile := filepath.Join(cacheDir, cacheKey+".json")
 	ua := "jaunt-tile-sweep/1.1 (advanced-finder)"
 
-	// Build comprehensive Overpass query
+	// Try to load from cache first if caching is enabled
+	if cfg.EnableCaching {
+		cachedData, err := loadOSMFromCache(cacheFile)
+		if err == nil {
+			log.Printf("📋 Using cached OSM data for %s (%d items)", cfg.City, len(cachedData))
+			return cachedData, nil
+		}
+	}
+
+	// Build comprehensive Overpass query - Fixed syntax for better compatibility
 	adminLevels := strings.Join(cfg.OSMAdminLevels, "|")
 	placeTypes := strings.Join(cfg.OSMPlaceTypes, "|")
 
+	// Improved query with proper area matching and error handling
 	query := fmt.Sprintf(`
-[out:json][timeout:30];
+[out:json][timeout:45];
+// Find the area for the city first
+area[name~"%s"][admin_level~"^[2-8]$"];
+// Then use that area to find administrative boundaries
 (
-  area["name"~"^%s$",i]["admin_level"~"^[2-8]$"]->.a;
+  relation["boundary"="administrative"]["admin_level"~"(%s)"](area);
+  relation["place"~"(%s)"](area);
 );
-(
-  relation["boundary"="administrative"]["admin_level"~"^(%s)$"]["name"](area.a);
-  relation["place"~"^(%s)$"]["name"](area.a);
-  way["boundary"="administrative"]["admin_level"~"^(%s)$"]["name"](area.a);
-  way["place"~"^(%s)$"]["name"](area.a);
-);
-out geom tags center bbox;
-`, cityEsc, adminLevels, placeTypes, adminLevels, placeTypes)
+// Get complete data with geometry and tags
+out geom tags center;
+`, regexp.QuoteMeta(cityEsc), adminLevels, placeTypes)
 
 	form := url.Values{}
 	form.Set("data", query)
 
-	req, err := http.NewRequest(http.MethodPost, "https://overpass-api.de/api/interpreter", 
+	req, err := http.NewRequest(http.MethodPost, "https://overpass-api.de/api/interpreter",
 		strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
@@ -295,6 +309,7 @@ out geom tags center bbox;
 	defer cancel()
 	req = req.WithContext(ctx)
 
+	log.Printf("🌐 Fetching OSM data for %s from Overpass API...", cfg.City)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -303,19 +318,83 @@ out geom tags center bbox;
 
 	bs, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("overpass enhanced query failed: status=%d", resp.StatusCode)
+		return nil, fmt.Errorf("overpass enhanced query failed: status=%d, body=%s",
+			resp.StatusCode, string(bs[:min(200, len(bs))]))
 	}
 
-	return parseEnhancedOSMResponse(bs)
+	// Parse the response
+	neighborhoods, err := parseEnhancedOSMResponse(bs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the results if caching is enabled
+	if cfg.EnableCaching && len(neighborhoods) > 0 {
+		if err := saveOSMToCache(neighborhoods, cacheFile); err != nil {
+			log.Printf("⚠️ Failed to cache OSM data: %v", err)
+		} else {
+			log.Printf("💾 Cached OSM data for %s (%d items)", cfg.City, len(neighborhoods))
+		}
+	}
+
+	return neighborhoods, nil
+}
+
+// Helper functions for cache management
+func loadOSMFromCache(cachePath string) ([]OSMNeighborhoodAdvanced, error) {
+	// Check if the cache file exists
+	if _, err := os.Stat(cachePath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("cache file does not exist: %s", cachePath)
+	}
+
+	// Read the cache file
+	data, err := os.ReadFile(cachePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cache file: %w", err)
+	}
+
+	// Check if the file is empty or too small
+	if len(data) < 10 {
+		return nil, fmt.Errorf("cache file is empty or corrupt")
+	}
+
+	// Parse the JSON data
+	var neighborhoods []OSMNeighborhoodAdvanced
+	if err := json.Unmarshal(data, &neighborhoods); err != nil {
+		return nil, fmt.Errorf("failed to parse cached OSM data: %w", err)
+	}
+
+	return neighborhoods, nil
+}
+
+func saveOSMToCache(neighborhoods []OSMNeighborhoodAdvanced, cachePath string) error {
+	// Ensure cache directory exists
+	cacheDir := filepath.Dir(cachePath)
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to create cache directory: %w", err)
+	}
+
+	// Marshal the data to JSON with pretty formatting
+	data, err := json.MarshalIndent(neighborhoods, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal OSM data: %w", err)
+	}
+
+	// Write to the cache file
+	if err := os.WriteFile(cachePath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write cache file: %w", err)
+	}
+
+	return nil
 }
 
 func parseEnhancedOSMResponse(data []byte) ([]OSMNeighborhoodAdvanced, error) {
 	var overpass struct {
 		Elements []struct {
-			Type     string            `json:"type"`
-			ID       int64             `json:"id"`
-			Tags     map[string]string `json:"tags"`
-			Center   *struct {
+			Type   string            `json:"type"`
+			ID     int64             `json:"id"`
+			Tags   map[string]string `json:"tags"`
+			Center *struct {
 				Lat float64 `json:"lat"`
 				Lon float64 `json:"lon"`
 			} `json:"center,omitempty"`
@@ -493,7 +572,7 @@ func executeMultiPhaseSearch(cfg *FinderAdvConfig, tavilyKey string) (string, er
 	for i, phase := range phases {
 		log.Printf("  Phase %d/%d: %s", i+1, len(phases), phase.Description)
 
-		results, err := performTavilySearchAdv(tavilyKey, phase.Query, phase.MaxResults, 
+		results, err := performTavilySearchAdv(tavilyKey, phase.Query, phase.MaxResults,
 			phase.Domains, cfg.ExcludeDomains)
 		if err != nil {
 			log.Printf("    ⚠️ Phase %d failed: %v", i+1, err)
@@ -525,8 +604,8 @@ func executeMultiPhaseSearch(cfg *FinderAdvConfig, tavilyKey string) (string, er
 		// Use just the titles and content from search results
 		for _, result := range deduped {
 			if result.Content != "" {
-				contextParts = append(contextParts, 
-					fmt.Sprintf("Source: %s\nTitle: %s\nContent: %s\n---\n", 
+				contextParts = append(contextParts,
+					fmt.Sprintf("Source: %s\nTitle: %s\nContent: %s\n---\n",
 						result.URL, result.Title, result.Content))
 			}
 		}
@@ -562,11 +641,16 @@ func processWithEnhancedLLM(cfg *FinderAdvConfig, context string, osm []OSMNeigh
 			return nil, errors.New("GOOGLE_API_KEY required for Gemini")
 		}
 		rawResponse, err = callGeminiEnhanced(geminiKey, systemPrompt, userPrompt)
-	default:
+	case "openai":
 		if openAIKey == "" {
 			return nil, errors.New("OPENAI_API_KEY required for OpenAI")
 		}
 		rawResponse, err = callOpenAIEnhanced(openAIKey, systemPrompt, userPrompt)
+	default:
+		if geminiKey == "" {
+			return nil, errors.New("GOOGLE_API_KEY required for Gemini")
+		}
+		rawResponse, err = callGeminiEnhanced(geminiKey, systemPrompt, userPrompt)
 	}
 
 	if err != nil {
@@ -597,9 +681,9 @@ func buildEnhancedContext(city string, webContext string, osmData []OSMNeighborh
 	if len(osmData) > 0 {
 		parts = append(parts, "=== OPENSTREETMAP DATA ===")
 		parts = append(parts, fmt.Sprintf("Found %d administrative areas in %s:", len(osmData), city))
-		
+
 		for _, osm := range osmData {
-			osmDesc := fmt.Sprintf("- %s (ID: %s, Type: %s", 
+			osmDesc := fmt.Sprintf("- %s (ID: %s, Type: %s",
 				osm.Name, osm.ID, osm.PlaceType)
 			if osm.AdminLevel != "" {
 				osmDesc += fmt.Sprintf(", Admin Level: %s", osm.AdminLevel)
@@ -681,10 +765,10 @@ func callOpenAIEnhanced(apiKey, systemPrompt, userPrompt string) (string, error)
 			{"role": "user", "content": userPrompt},
 		},
 		"temperature": 0.1, // Low temperature for consistency
-		"max_tokens": 4000,
+		"max_tokens":  4000,
 	}
 
-	raw, err := postJSONWithRetry("https://api.openai.com/v1/chat/completions", 
+	raw, err := postJSONWithRetry("https://api.openai.com/v1/chat/completions",
 		payload, headers, 3, 2*time.Second)
 	if err != nil {
 		return "", err
@@ -723,7 +807,7 @@ func callGeminiEnhanced(apiKey, systemPrompt, userPrompt string) (string, error)
 			},
 		},
 		"generationConfig": map[string]interface{}{
-			"temperature": 0.1,
+			"temperature":     0.1,
 			"maxOutputTokens": 4000,
 		},
 	}
@@ -780,12 +864,12 @@ func cleanLLMResponse(response string) string {
 	// Remove markdown code blocks
 	response = regexp.MustCompile("```(?:json)?\\s*").ReplaceAllString(response, "")
 	response = regexp.MustCompile("```").ReplaceAllString(response, "")
-	
+
 	// Remove common prefixes
 	lines := strings.Split(response, "\n")
 	var cleaned []string
 	foundJSON := false
-	
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if !foundJSON && (strings.HasPrefix(line, "{") || strings.HasPrefix(line, "[")) {
@@ -795,7 +879,7 @@ func cleanLLMResponse(response string) string {
 			cleaned = append(cleaned, line)
 		}
 	}
-	
+
 	return strings.Join(cleaned, "\n")
 }
 
@@ -805,7 +889,7 @@ func extractJSONFromText(text string) string {
 	if start == -1 {
 		return ""
 	}
-	
+
 	braceCount := 0
 	for i := start; i < len(text); i++ {
 		if text[i] == '{' {
@@ -817,7 +901,7 @@ func extractJSONFromText(text string) string {
 			}
 		}
 	}
-	
+
 	return ""
 }
 
@@ -872,7 +956,7 @@ func extractContentParallel(apiKey string, results []tavilySearchResult, cfg *Fi
 	// Limit concurrent extractions
 	maxWorkers := min(cfg.ParallelExtractors, len(results))
 	semaphore := make(chan struct{}, maxWorkers)
-	
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var extracted []string
@@ -891,7 +975,7 @@ func extractContentParallel(apiKey string, results []tavilySearchResult, cfg *Fi
 			}
 
 			mu.Lock()
-			extracted = append(extracted, fmt.Sprintf("Source: %s\nTitle: %s\nContent: %s\n---\n", 
+			extracted = append(extracted, fmt.Sprintf("Source: %s\nTitle: %s\nContent: %s\n---\n",
 				r.URL, r.Title, content))
 			mu.Unlock()
 		}(result)
@@ -937,28 +1021,28 @@ func extractSingleURL(apiKey, url string, maxChars int) (string, error) {
 func ExampleRunAdvancedFinder() {
 	// Example configuration for London neighborhoods
 	cfg := &FinderAdvConfig{
-		City:                "London",
-		LLM:                 "openai", // or "gemini"
+		City:                "Edinburgh",
+		LLM:                 "gemini", // or "gemini"
 		MaxResults:          20,
 		EnableMultiPhase:    true,
 		PreferOSMBoundaries: true,
 		MinConfidenceScore:  0.4,
 		EnableValidation:    true,
-		OutputFile:          "london_neighborhoods.json",
-		
+		OutputFile:          "neighborhoods.json",
+
 		// Enhanced OSM settings
-		OSMAdminLevels:      []string{"8", "9", "10"},
-		MinBoundaryArea:     0.5, // 0.5 km² minimum
-		
+		OSMAdminLevels:  []string{"8", "9", "10"},
+		MinBoundaryArea: 0.5, // 0.5 km² minimum
+
 		// Official domains to prioritize
-		OfficialDomains:     []string{
+		OfficialDomains: []string{
 			"gov.uk", "london.gov.uk", "city.london.gov.uk",
 			"wikipedia.org", "openstreetmap.org",
 		},
 	}
 
 	log.Printf("🚀 Starting Advanced Finder example for %s", cfg.City)
-	
+
 	result, err := RunAdvancedFinder(cfg)
 	if err != nil {
 		log.Fatalf("❌ Advanced finder failed: %v", err)
@@ -966,9 +1050,9 @@ func ExampleRunAdvancedFinder() {
 
 	log.Printf("✅ Success! Found %d neighborhoods", result.Metadata.TotalFound)
 	log.Printf("📊 Quality Score: %.2f", result.Metadata.QualityScore)
-	log.Printf("📈 Source Distribution: OSM=%d, LLM=%d, Hybrid=%d", 
+	log.Printf("📈 Source Distribution: OSM=%d, LLM=%d, Hybrid=%d",
 		result.Metadata.OSMCount, result.Metadata.LLMCount, result.Metadata.HybridCount)
-	
+
 	// Show top 5 results
 	log.Printf("🏘️ Top neighborhoods by confidence:")
 	for i, neigh := range result.Neighborhoods {
@@ -979,7 +1063,7 @@ func ExampleRunAdvancedFinder() {
 		if neigh.HasValidBoundary {
 			boundaryStatus = "✅"
 		}
-		log.Printf("  %d. %s (%.2f confidence, %s source, %s boundary)", 
+		log.Printf("  %d. %s (%.2f confidence, %s source, %s boundary)",
 			i+1, neigh.Name, neigh.ConfidenceScore, neigh.Source, boundaryStatus)
 	}
 }
@@ -1118,6 +1202,8 @@ func validateAndScore(cfg *FinderAdvConfig, neighborhoods []NeighborhoodAdvanced
 		// Geometric validation
 		if len(neigh.Boundary) > 0 {
 			neigh.GeometryValid = validateGeoJSONGeometry(neigh.Boundary)
+			neigh.HasValidBoundary = neigh.GeometryValid
+
 			if !neigh.GeometryValid && cfg.PreferOSMBoundaries {
 				// Try to fetch boundary from OSM if validation fails
 				if boundary := tryFetchOSMBoundary(neigh.Name, cfg); boundary != nil {
@@ -1130,15 +1216,15 @@ func validateAndScore(cfg *FinderAdvConfig, neighborhoods []NeighborhoodAdvanced
 
 		// Confidence adjustment based on validation
 		originalConfidence := neigh.ConfidenceScore
-		
+
 		if neigh.GeometryValid && neigh.HasValidBoundary {
 			neigh.ConfidenceScore += 0.1
 		}
-		
+
 		if neigh.Source == "hybrid" {
 			neigh.ConfidenceScore += 0.05 // Bonus for multiple source validation
 		}
-		
+
 		// Cap at 1.0
 		if neigh.ConfidenceScore > 1.0 {
 			neigh.ConfidenceScore = 1.0
@@ -1148,7 +1234,7 @@ func validateAndScore(cfg *FinderAdvConfig, neighborhoods []NeighborhoodAdvanced
 		if neigh.ConfidenceScore >= cfg.MinConfidenceScore {
 			validated = append(validated, neigh)
 			if neigh.ConfidenceScore != originalConfidence {
-				log.Printf("  📊 %s: confidence adjusted %.2f → %.2f", 
+				log.Printf("  📊 %s: confidence adjusted %.2f → %.2f",
 					neigh.Name, originalConfidence, neigh.ConfidenceScore)
 			}
 		}
@@ -1156,6 +1242,50 @@ func validateAndScore(cfg *FinderAdvConfig, neighborhoods []NeighborhoodAdvanced
 
 	log.Printf("✅ Validation complete: %d/%d neighborhoods passed", len(validated), len(neighborhoods))
 	return validated
+}
+
+func calculateQualityMetrics(result *FinderAdvancedOut) {
+	if len(result.Neighborhoods) == 0 {
+		result.Metadata.QualityScore = 0.0
+		return
+	}
+
+	var totalConfidence float64
+	var osmCount, llmCount, hybridCount int
+	var withBoundaries int
+
+	for _, neigh := range result.Neighborhoods {
+		totalConfidence += neigh.ConfidenceScore
+
+		switch neigh.Source {
+		case "osm":
+			osmCount++
+		case "llm":
+			llmCount++
+		case "hybrid":
+			hybridCount++
+		}
+
+		if neigh.HasValidBoundary {
+			withBoundaries++
+		}
+	}
+
+	result.Metadata.OSMCount = osmCount
+	result.Metadata.LLMCount = llmCount
+	result.Metadata.HybridCount = hybridCount
+
+	avgConfidence := totalConfidence / float64(len(result.Neighborhoods))
+	boundaryRatio := float64(withBoundaries) / float64(len(result.Neighborhoods))
+
+	// Quality score combines average confidence and boundary coverage
+	result.Metadata.QualityScore = (avgConfidence * 0.7) + (boundaryRatio * 0.3)
+
+	log.Printf("📊 Quality Metrics:")
+	log.Printf("  Average Confidence: %.2f", avgConfidence)
+	log.Printf("  Boundary Coverage: %.1f%% (%d/%d)", boundaryRatio*100, withBoundaries, len(result.Neighborhoods))
+	log.Printf("  Source Distribution: OSM=%d, LLM=%d, Hybrid=%d", osmCount, llmCount, hybridCount)
+	log.Printf("  Overall Quality Score: %.2f", result.Metadata.QualityScore)
 }
 
 func validateGeoJSONGeometry(boundary json.RawMessage) bool {
@@ -1177,7 +1307,36 @@ func validateGeoJSONGeometry(boundary json.RawMessage) bool {
 	// Basic validation for MultiPolygon
 	if geometryType == "MultiPolygon" {
 		if coordArray, ok := coordinates.([]interface{}); ok {
-			return len(coordArray) > 0
+			// Check if we have actual coordinate data
+			return len(coordArray) > 0 && hasCoordinateData(coordArray)
+		}
+	}
+
+	// Also support regular Polygon type
+	if geometryType == "Polygon" {
+		if coordArray, ok := coordinates.([]interface{}); ok {
+			// Check if we have actual coordinate data
+			return len(coordArray) > 0 && hasCoordinateData(coordArray)
+		}
+	}
+
+	return false
+}
+
+func hasCoordinateData(coordArray []interface{}) bool {
+	if len(coordArray) == 0 {
+		return false
+	}
+
+	// For MultiPolygon, first element should be an array of polygons
+	if rings, ok := coordArray[0].([]interface{}); ok {
+		if len(rings) == 0 {
+			return false
+		}
+
+		// For the first ring, check if it contains coordinates
+		if coordinates, ok := rings[0].([]interface{}); ok {
+			return len(coordinates) >= 4 // A valid polygon has at least 4 coordinates (closed)
 		}
 	}
 
@@ -1185,56 +1344,65 @@ func validateGeoJSONGeometry(boundary json.RawMessage) bool {
 }
 
 func tryFetchOSMBoundary(name string, cfg *FinderAdvConfig) json.RawMessage {
-	// Simplified OSM boundary fetch for failed geometries
-	// In a full implementation, this would query Nominatim
-	log.Printf("  🔍 Attempting to fetch OSM boundary for: %s", name)
-	return nil // Placeholder - would implement actual OSM query
-}
+	cityEsc := url.QueryEscape(cfg.City)
+	nameEsc := regexp.QuoteMeta(name)
+	ua := "jaunt-tile-sweep/1.1 (advanced-finder-fallback)"
 
-// ----------- Quality Metrics Calculation -----------
+	// Query for a specific relation/way with the given name inside the city area.
+	query := fmt.Sprintf(`
+[out:json][timeout:20];
+area[name~"%s"][admin_level~"^[2-8]$"]->.searchArea;
+(
+  relation[name~"(?i)^%s$"](area.searchArea);
+);
+out geom;
+`, cityEsc, nameEsc)
 
-func calculateQualityMetrics(result *FinderAdvancedOut) {
-	if len(result.Neighborhoods) == 0 {
-		result.Metadata.QualityScore = 0.0
-		return
+	form := url.Values{}
+	form.Set("data", query)
+
+	req, err := http.NewRequest(http.MethodPost, "https://overpass-api.de/api/interpreter", strings.NewReader(form.Encode()))
+	if err != nil {
+		log.Printf("tryFetchOSMBoundary: failed to create request for '%s': %v", name, err)
+		return nil
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", ua)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("tryFetchOSMBoundary: request failed for '%s': %v", name, err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil
 	}
 
-	var totalConfidence float64
-	var osmCount, llmCount, hybridCount int
-	var withBoundaries int
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil
+	}
 
-	for _, neigh := range result.Neighborhoods {
-		totalConfidence += neigh.ConfidenceScore
-		
-		switch neigh.Source {
-		case "osm":
-			osmCount++
-		case "llm":
-			llmCount++
-		case "hybrid":
-			hybridCount++
-		}
-		
-		if neigh.HasValidBoundary {
-			withBoundaries++
+	// Use the existing parser to extract the geometry
+	parsed, err := parseEnhancedOSMResponse(data)
+	if err != nil || len(parsed) == 0 {
+		return nil
+	}
+
+	// Return the boundary of the first valid result
+	for _, p := range parsed {
+		if len(p.Boundary) > 0 {
+			return p.Boundary
 		}
 	}
 
-	result.Metadata.OSMCount = osmCount
-	result.Metadata.LLMCount = llmCount  
-	result.Metadata.HybridCount = hybridCount
-
-	avgConfidence := totalConfidence / float64(len(result.Neighborhoods))
-	boundaryRatio := float64(withBoundaries) / float64(len(result.Neighborhoods))
-	
-	// Quality score combines average confidence and boundary coverage
-	result.Metadata.QualityScore = (avgConfidence * 0.7) + (boundaryRatio * 0.3)
-
-	log.Printf("📊 Quality Metrics:")
-	log.Printf("  Average Confidence: %.2f", avgConfidence)
-	log.Printf("  Boundary Coverage: %.1f%% (%d/%d)", boundaryRatio*100, withBoundaries, len(result.Neighborhoods))
-	log.Printf("  Source Distribution: OSM=%d, LLM=%d, Hybrid=%d", osmCount, llmCount, hybridCount)
-	log.Printf("  Overall Quality Score: %.2f", result.Metadata.QualityScore)
+	return nil
 }
 
 // ----------- Output Management -----------
