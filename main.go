@@ -127,22 +127,41 @@ func main() {
 		log.Printf("Skipping Finder (FINDER_SKIP_IF_EXISTS=true and %s already populated).", neighborhoodsFile)
 	} else {
 		// 1) Run Finder to get neighborhoods (writes to NEIGHBORHOODS_FILE if set)
-		finderCfg := &FinderConfig{
-			City:           city,
-			Query:          getenv("FINDER_QUERY", ""),                      // optional custom query
-			LLM:            strings.ToLower(getenv("FINDER_LLM", "gemini")), // openai|gemini
-			MaxResults:     getenvInt("FINDER_MAX_RESULTS", 8),
-			SkipTavily:     getenvBool("FINDER_SKIP_TAVILY", false),
-			ExtractContent: getenvBool("FINDER_EXTRACT", true),
-			OutputFile:     neighborhoodsFile, // write neighborhoods to file for the next step
-			// New: include OSM-derived neighborhoods as context + merge preference
-			UseOSMContext: getenvBool("FINDER_USE_OSM", true),
+		// finderCfg := &FinderConfig{
+		// 	City:           city,
+		// 	Query:          getenv("FINDER_QUERY", ""),                      // optional custom query
+		// 	LLM:            strings.ToLower(getenv("FINDER_LLM", "gemini")), // openai|gemini
+		// 	MaxResults:     getenvInt("FINDER_MAX_RESULTS", 8),
+		// 	SkipTavily:     getenvBool("FINDER_SKIP_TAVILY", false),
+		// 	ExtractContent: getenvBool("FINDER_EXTRACT", true),
+		// 	OutputFile:     neighborhoodsFile, // write neighborhoods to file for the next step
+		// 	// New: include OSM-derived neighborhoods as context + merge preference
+		// 	UseOSMContext: getenvBool("FINDER_USE_OSM", true),
+		// }
+
+		// out, err := RunFinder(finderCfg)
+		// if err != nil {
+		// 	log.Fatalf("finder failed: %v", err)
+		// }
+		cfg := &FinderAdvConfig{
+			City:                "Edinburgh",
+			LLM:                 "gemini", // or "gemini"
+			MaxResults:          20,
+			EnableMultiPhase:    true,
+			PreferOSMBoundaries: true,
+			MinConfidenceScore:  0.4,
+			EnableValidation:    true,
+			OutputFile:          "edi_neighborhoods.json",
+			EnableCaching:       true,
 		}
 
-		out, err := RunFinder(finderCfg)
+		out, err := RunAdvancedFinder(cfg)
 		if err != nil {
-			log.Fatalf("finder failed: %v", err)
+			log.Fatal(err)
 		}
+
+		fmt.Printf("Found %d neighborhoods with quality score: %.2f\n",
+			out.Metadata.TotalFound, out.Metadata.QualityScore)
 
 		// Always persist the finder output to NEIGHBORHOODS_FILE
 		if neighborhoodsFile != "" {
